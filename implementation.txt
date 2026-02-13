@@ -1,0 +1,147 @@
+Remote Classroom Platform — Implementation Plan
+Build a production-grade virtual classroom platform with live video, real-time chat, engagement tracking, timed comprehension checks, analytics dashboard, and gamification.
+
+User Review Required
+IMPORTANT
+
+Database choice: The requirements specify PostgreSQL + Redis via Docker. For a hackathon MVP that's runnable immediately with npm install && npm run dev, I will use SQLite (via better-sqlite3) instead of PostgreSQL and in-memory stores instead of Redis. This eliminates the Docker dependency and makes the app runnable instantly. A Docker Compose file will still be provided for production. Please confirm this is acceptable.
+
+WARNING
+
+WebRTC: Full mesh WebRTC with a media server (mediasoup) is extremely complex. For this MVP, I will use simple-peer for peer-to-peer connections, which works for small classes (up to ~6 participants). Larger classes would require a media server.
+
+IMPORTANT
+
+Tailwind CSS: The requirements specify Tailwind. I will use Tailwind CSS v3 via CDN/PostCSS as requested despite the default preference for vanilla CSS.
+
+Proposed Changes
+Phase 1 — Project Scaffolding
+[NEW] 
+package.json
+Root backend package with Express, Socket.IO, better-sqlite3, JWT, bcrypt, cors, uuid dependencies.
+
+[NEW] 
+docker-compose.yml
+Optional Docker Compose for PostgreSQL & Redis (production use).
+
+Frontend via npx create-vite
+Initialize React+Vite app in client/ folder, add Tailwind CSS, install dependencies: socket.io-client, simple-peer, @reduxjs/toolkit, react-redux, react-router-dom, chart.js, react-chartjs-2, axios.
+
+Phase 2 — Backend Core
+[NEW] 
+db.js
+SQLite database initialization, creates all tables: Users, Classes, Enrollments, PopupLogs, Questions, Options, Responses, FocusLogs, Points.
+
+[NEW] 
+server.js
+Express app entry point, mounts routes, initializes Socket.IO.
+
+[NEW] 
+middlewares/auth.js
+JWT verification middleware.
+
+[NEW] 
+routes/auth.js
+POST /api/auth/register, POST /api/auth/login — hashes passwords, issues JWT.
+
+[NEW] 
+routes/classroom.js
+POST /api/classroom/create, POST /api/classroom/join, GET /api/classroom/list, GET /api/classroom/:id.
+
+[NEW] 
+routes/questions.js
+POST /api/questions/create, POST /api/questions/respond, GET /api/questions/:classId/results.
+
+[NEW] 
+routes/analytics.js
+GET /api/analytics/:classId — returns engagement, attendance, focus, understanding scores.
+
+Phase 3 — Real-Time & Engagement
+[NEW] 
+sockets/classroomSocket.js
+Socket.IO namespace for classroom: join-room, leave-room, chat-message, raise-hand, webrtc-offer, webrtc-answer, webrtc-ice-candidate.
+
+[NEW] 
+services/engagementEngine.js
+Schedules random popups every 3–7 min per class, emits engagement-popup, listens for popup-response, calculates attendance score.
+
+[NEW] 
+services/questionEngine.js
+Handles question broadcast, 60s timer, response collection, correctness evaluation.
+
+[NEW] 
+services/analyticsEngine.js
+Computes engagement = 0.5attendance + 0.3focus + 0.2*question_accuracy.
+
+Phase 4 — Frontend Auth & Layout
+[NEW] 
+src/store/index.js
+Redux store configuration.
+
+[NEW] 
+src/store/userSlice.js
+User auth state: login, logout, token storage.
+
+[NEW] 
+src/store/classroomSlice.js
+Classroom state: participants, chat, popups, questions.
+
+[NEW] 
+src/pages/Login.jsx
+Login + Register form with role selection (Teacher/Student).
+
+[NEW] 
+src/pages/Dashboard.jsx
+Teacher analytics dashboard with Chart.js charts.
+
+[NEW] 
+src/pages/Classroom.jsx
+Main classroom page: video grid, chat, controls.
+
+[NEW] 
+src/pages/Home.jsx
+Class list, create/join classroom.
+
+Phase 5 — Frontend Components
+[NEW] 
+src/components/VideoGrid.jsx
+WebRTC video grid using simple-peer.
+
+[NEW] 
+src/components/ChatBox.jsx
+Real-time chat via Socket.IO.
+
+[NEW] 
+src/components/PopupCheck.jsx
+Engagement popup overlay with 15s countdown.
+
+[NEW] 
+src/components/QuestionModal.jsx
+MCQ question modal with 60s timer.
+
+[NEW] 
+src/components/AnalyticsCharts.jsx
+Chart.js bar, pie, and timeline charts.
+
+[NEW] 
+src/components/Leaderboard.jsx
+Points table & leaderboard.
+
+[NEW] 
+src/utils/focusTracker.js
+Page Visibility API + blur/focus events → emits data to server.
+
+Verification Plan
+Automated Tests
+cd server && node server.js — server starts on port 5000 without errors
+cd client && npm run dev — frontend starts on port 5173 without errors
+Browser Verification (manual)
+Open http://localhost:5173 — Login page loads
+Register a Teacher account → redirected to Home
+Create a class → class code generated
+Open a second browser tab, register a Student
+Student joins class with code → enters classroom
+Video/chat should work between the two tabs
+Engagement popups should appear to the student
+Teacher can trigger a question → student sees MCQ
+Teacher dashboard shows charts with scores
