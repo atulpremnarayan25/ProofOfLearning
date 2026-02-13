@@ -4,7 +4,11 @@
 import 'package:dio/dio.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:5001/api';
+  // Set at build time: --dart-define=API_URL=https://your-render-url.onrender.com/api
+  static const String baseUrl = String.fromEnvironment(
+    'API_URL',
+    defaultValue: 'http://localhost:5001/api',
+  );
 
   final Dio _dio;
   String? _token;

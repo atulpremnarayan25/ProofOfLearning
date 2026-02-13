@@ -1,0 +1,22 @@
+# ── Node.js (server) ──────────────────────────
+node_modules/
+*.db
+.env
+
+# ── Flutter (client) ──────────────────────────
+# Keep build/web so Vercel can deploy pre-built output
+client/.dart_tool/
+client/.packages
+client/.flutter-plugins
+client/.flutter-plugins-dependencies
+client/.idea/
+client/android/
+client/ios/
+client/macos/
+client/windows/
+client/linux/
+client/test/
+
+# OS
+.DS_Store
+Thumbs.db

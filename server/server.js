@@ -22,8 +22,9 @@ const app = express();
 const server = http.createServer(app);
 
 // ── Middleware ──────────────────────────────────
+const FRONTEND_URL = process.env.FRONTEND_URL || '*';
 app.use(cors({
-    origin: '*', // Allow Flutter web, Android, iOS
+    origin: FRONTEND_URL === '*' ? '*' : [FRONTEND_URL, 'http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -43,7 +44,7 @@ app.get('/api/health', (req, res) => {
 // ── Socket.IO ──────────────────────────────────
 const io = new Server(server, {
     cors: {
-        origin: '*',
+        origin: FRONTEND_URL === '*' ? '*' : [FRONTEND_URL, 'http://localhost:3000'],
         methods: ['GET', 'POST'],
     },
 });

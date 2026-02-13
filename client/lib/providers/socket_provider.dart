@@ -11,11 +11,16 @@ class SocketProvider extends ChangeNotifier {
 
   bool get isConnected => _isConnected;
   IO.Socket? get socket => _socket;
+  // Set at build time: --dart-define=SOCKET_URL=https://your-render-url.onrender.com
+  static const String _socketUrl = String.fromEnvironment(
+    'SOCKET_URL',
+    defaultValue: 'http://localhost:5001',
+  );
 
   /// Connect to the Socket.IO server with JWT auth.
   void connect(String token) {
     _socket = IO.io(
-      'http://localhost:5001',
+      _socketUrl,
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .setAuth({'token': token})
